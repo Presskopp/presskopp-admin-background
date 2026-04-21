@@ -1,13 +1,13 @@
 <?php
 /**
- * Plugin Name: Admin Background Image
+ * Plugin Name: Presskopp Admin Background
  * Description: Adds a customizable background image to the WordPress admin with live preview, overlay, color and blur.
- * Version: 1.0.0
+ * Version: 1.0.1
  * Author: Presskopp
  * Author URI: https://presskopp.com/
  * License: GPLv2 or later
  * License URI: https://www.gnu.org/licenses/gpl-2.0.html
- * Text Domain: admin-background-image
+ * Text Domain: presskopp-admin-background
  * Domain Path: /languages
  */
 
@@ -26,19 +26,26 @@ class ABI_Admin_Background {
         add_action( 'admin_menu', array( $this, 'add_settings_page' ) );
         add_action( 'admin_enqueue_scripts', array( $this, 'enqueue_assets' ) );
         add_action( 'admin_enqueue_scripts', array( $this, 'apply_background' ) );
-
         add_action( 'wp_ajax_abi_save_settings', array( $this, 'ajax_save_settings' ) );
+        add_action( 'plugins_loaded', array( $this, 'load_textdomain' ) );
 
         register_deactivation_hook( __FILE__, array( $this, 'on_deactivate' ) );
     }
 
+    public function load_textdomain() {
+        load_plugin_textdomain(
+            'presskopp-admin-background',
+            false,
+            dirname( plugin_basename( __FILE__ ) ) . '/languages'
+        );
+    }
     /**
      * Register settings page under "Settings"
      */
     public function add_settings_page() {
         add_theme_page(
-            __( 'Admin Background', 'admin-background-image' ),
-            __( 'Admin Background', 'admin-background-image' ),
+            __( 'Admin Background', 'presskopp-admin-background' ),
+            __( 'Admin Background', 'presskopp-admin-background' ),
             'manage_options',
             'abi-admin-background',
             array( $this, 'render_settings_page' )
@@ -80,7 +87,7 @@ class ABI_Admin_Background {
         }
 
         // Register empty handle for inline styles
-        wp_register_style( 'abi-admin-style', false, array(), '1.0.0' );
+        wp_register_style( 'abi-admin-style', false, array(), '1.0.1' );
         wp_enqueue_style( 'abi-admin-style' );
     }
 
@@ -98,18 +105,18 @@ class ABI_Admin_Background {
         ?>
 
         <div class="wrap">
-            <h1><?php echo esc_html__( 'Admin Background Image', 'admin-background-image' ); ?></h1>
+            <h1><?php echo esc_html__( 'Admin Background Image', 'presskopp-admin-background' ); ?></h1>
 
             <table class="form-table">
 
                 <!-- Image selection -->
                 <tr>
-                    <th><?php echo esc_html__( 'Background Image', 'admin-background-image' ); ?></th>
+                    <th><?php echo esc_html__( 'Background Image', 'presskopp-admin-background' ); ?></th>
                     <td>
                         <input type="hidden" id="abi_image" value="<?php echo esc_attr( $image_id ); ?>">
 
                         <button type="button" class="button" id="abi_upload_button">
-                            <?php echo esc_html__( 'Select Image', 'admin-background-image' ); ?>
+                            <?php echo esc_html__( 'Select Image', 'presskopp-admin-background' ); ?>
                         </button>
 
                         <button
@@ -118,14 +125,14 @@ class ABI_Admin_Background {
                             id="abi_remove_button"
                             style="<?php echo $image_id ? '' : 'display:none;'; ?>"
                         >
-                            <?php echo esc_html__( 'Remove', 'admin-background-image' ); ?>
+                            <?php echo esc_html__( 'Remove', 'presskopp-admin-background' ); ?>
                         </button>
                     </td>
                 </tr>
 
                 <!-- Overlay + Color -->
                 <tr class="abi-dependent">
-                    <th><?php echo esc_html__( 'Overlay', 'admin-background-image' ); ?></th>
+                    <th><?php echo esc_html__( 'Overlay', 'presskopp-admin-background' ); ?></th>
                     <td>
                         <div class="abi-range-group">
                             <input type="range" min="0" max="0.8" step="0.05" id="abi_overlay" value="<?php echo esc_attr( $overlay ); ?>">
@@ -140,7 +147,7 @@ class ABI_Admin_Background {
 
                 <!-- Blur -->
                 <tr class="abi-dependent">
-                    <th><?php echo esc_html__( 'Blur', 'admin-background-image' ); ?></th>
+                    <th><?php echo esc_html__( 'Blur', 'presskopp-admin-background' ); ?></th>
                     <td>
                         <div class="abi-range-group">
                             <input type="range" min="0" max="10" step="1" id="abi_blur" value="<?php echo esc_attr( $blur ); ?>">
@@ -163,13 +170,19 @@ class ABI_Admin_Background {
         check_ajax_referer( 'abi_save', 'nonce' );
 
         if ( ! current_user_can( 'manage_options' ) ) {
-            wp_send_json_error();
+            wp_send_json_error( array( 'message' => 'Forbidden' ), 403 );
         }
 
         $image_id = isset( $_POST['image_id'] ) ? absint( wp_unslash( $_POST['image_id'] ) ) : 0;
         $overlay  = isset( $_POST['overlay'] )  ? floatval( wp_unslash( $_POST['overlay'] ) ) : 0;
         $blur     = isset( $_POST['blur'] )     ? intval( wp_unslash( $_POST['blur'] ) ) : 0;
-        $color    = isset( $_POST['color'] )    ? sanitize_hex_color( wp_unslash( $_POST['color'] ) ) : '#000000';
+        $color = isset( $_POST['color'] )
+            ? sanitize_hex_color( wp_unslash( $_POST['color'] ) )
+            : '';
+
+        if ( ! $color ) {
+            $color = '#000000';
+        }
 
         update_option(
             $this->option_name,
@@ -181,7 +194,9 @@ class ABI_Admin_Background {
             )
         );
 
-        wp_send_json_success();
+        wp_send_json_success( array(
+            'message' => 'Settings saved',
+        ) );
     }
 
     /**
@@ -194,18 +209,19 @@ class ABI_Admin_Background {
             return;
         }
 
-        $settings = get_option( $this->option_name );
+        $settings = $this->get_settings();
 
-        if ( empty( $settings['image_id'] ) ) {
+        $id  = absint( $settings['image_id'] );
+        $url = $id ? wp_get_attachment_url( $id ) : false;
+
+        if ( ! $url ) {
             return;
         }
 
-        $url     = wp_get_attachment_url( $settings['image_id'] );
-        $overlay = floatval( $settings['overlay'] );
-        $blur    = intval( $settings['blur'] );
-        $color   = isset( $settings['color'] ) ? $settings['color'] : '#000000';
-
-        $rgba = $this->hex_to_rgba( $color, $overlay );
+        $overlay = max( 0, min( 0.8, floatval( $settings['overlay'] ) ) );
+        $blur    = max( 0, min( 10, intval( $settings['blur'] ) ) );
+        $color   = $settings['color'];
+        $rgba    = $this->hex_to_rgba( $color, $overlay );
 
         wp_add_inline_style(
             'abi-admin-style',
@@ -228,11 +244,33 @@ class ABI_Admin_Background {
     }
 
     /**
+     * Retrieve plugin settings with defaults
+     */
+    private function get_settings() {
+        $defaults = array(
+            'image_id' => 0,
+            'overlay'  => 0,
+            'blur'     => 0,
+            'color'    => '#000000',
+        );
+
+        return wp_parse_args(
+            get_option( $this->option_name, array() ),
+            $defaults
+        );
+    }
+
+    /**
      * Convert HEX color to RGBA
      */
     private function hex_to_rgba( $hex, $alpha ) {
 
         $hex = str_replace( '#', '', $hex );
+
+        // if invalid hex, return transparent
+        if ( ! preg_match( '/^[0-9a-fA-F]{3}$|^[0-9a-fA-F]{6}$/', $hex ) ) {
+            return 'rgba(0,0,0,0)';
+        }
 
         if ( strlen( $hex ) === 3 ) {
             $r = hexdec( str_repeat( substr( $hex, 0, 1 ), 2 ) );
