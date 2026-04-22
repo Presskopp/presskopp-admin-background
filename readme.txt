@@ -1,14 +1,12 @@
-=== Admin Background Image ===
-Contributors: Presskopp
-Author: Presskopp
-Author URI: https://presskopp.com/
-Tags: admin, background, ui, customization, dashboard
+=== Presskopp Admin Background ===
+Contributors: presskopp
+Tags: admin background, dashboard customization, admin ui, background image, admin design
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 Requires at least: 5.0
 Tested up to: 6.9
 Requires PHP: 7.4
-Stable tag: 1.0.0
+Stable tag: 1.0.1
 
 Adds a customizable background image to the WordPress admin with live preview, overlay color, and blur.
 
@@ -18,7 +16,7 @@ Admin Background Image allows you to customize the look and feel of your WordPre
 
 The plugin is lightweight, fast, and applies all changes instantly.
 
-**Key Features:**
+== Key Features ==
 
 * Live background preview (no page reload required)
 * Media Library integration for image selection
@@ -31,7 +29,7 @@ The plugin is lightweight, fast, and applies all changes instantly.
 
 == Installation ==
 
-1. Upload the plugin files to `/wp-content/plugins/admin-background-image/`
+1. Upload the plugin files to `/wp-content/plugins/presskopp-admin-background/`
 2. Activate the plugin through the 'Plugins' menu in WordPress
 3. Go to **Appearance → Admin Background**
 
@@ -85,10 +83,7 @@ A: No, the plugin is lightweight and optimized for performance.
 
 == Support ==
 
-For support and feature requests, open a ticket on wp.org
+For support and feature requests, please use the support forum on WordPress.org.
 
-== License ==
-
-This plugin is licensed under the GPL v2 or later.
 
 Copyright (c) Presskopp - https://presskopp.com/
