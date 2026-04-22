@@ -227,16 +227,26 @@ class ABI_Admin_Background {
             'abi-admin-style',
             "
             body.wp-admin {
-                background: url('" . esc_url( $url ) . "') no-repeat center center fixed;
-                background-size: cover;
+                position: relative;
+                z-index: 0;
             }
 
             body.wp-admin::before {
                 content: '';
                 position: fixed;
                 inset: 0;
+                background: url('" . esc_url( $url ) . "') no-repeat center center fixed;
+                background-size: cover;
+                filter: blur({$blur}px);
+                z-index: -2;
+            }
+
+            body.wp-admin::after {
+                content: '';
+                position: fixed;
+                inset: 0;
                 background: {$rgba};
-                backdrop-filter: blur({$blur}px);
+                z-index: -1;
                 pointer-events: none;
             }
             "
