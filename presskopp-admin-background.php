@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Presskopp Admin Background
  * Description: Adds a customizable background image to the WordPress admin with live preview, overlay, color and blur.
- * Version: 1.0.1
+ * Version: 1.0.0
  * Author: Presskopp
  * Author URI: https://presskopp.com/
  * License: GPLv2 or later
@@ -13,32 +13,24 @@
 
 if ( ! defined( 'ABSPATH' ) ) exit;
 
-class ABI_Admin_Background {
+class PKABG_Admin_Background {
 
     /**
      * Option key used to store plugin settings
      *
      * @var string
      */
-    private $option_name = 'abi_admin_bg_settings';
+    private $option_name = 'pkabg_admin_bg_settings';
 
     public function __construct() {
         add_action( 'admin_menu', array( $this, 'add_settings_page' ) );
         add_action( 'admin_enqueue_scripts', array( $this, 'enqueue_assets' ) );
         add_action( 'admin_enqueue_scripts', array( $this, 'apply_background' ) );
-        add_action( 'wp_ajax_abi_save_settings', array( $this, 'ajax_save_settings' ) );
-        add_action( 'plugins_loaded', array( $this, 'load_textdomain' ) );
+        add_action( 'wp_ajax_pkabg_save_settings', array( $this, 'ajax_save_settings' ) );
 
         register_deactivation_hook( __FILE__, array( $this, 'on_deactivate' ) );
     }
 
-    public function load_textdomain() {
-        load_plugin_textdomain(
-            'presskopp-admin-background',
-            false,
-            dirname( plugin_basename( __FILE__ ) ) . '/languages'
-        );
-    }
     /**
      * Register settings page under "Settings"
      */
@@ -47,7 +39,7 @@ class ABI_Admin_Background {
             __( 'Admin Background', 'presskopp-admin-background' ),
             __( 'Admin Background', 'presskopp-admin-background' ),
             'manage_options',
-            'abi-admin-background',
+            'pkabg-admin-background',
             array( $this, 'render_settings_page' )
         );
     }
@@ -62,12 +54,12 @@ class ABI_Admin_Background {
         $image_url = $image_id ? wp_get_attachment_url( $image_id ) : '';
 
         // Only load JS on plugin settings page
-        if ( 'appearance_page_abi-admin-background' === $hook ) {
+        if ( 'appearance_page_pkabg-admin-background' === $hook ) {
 
             wp_enqueue_media();
 
             wp_enqueue_script(
-                'abi-admin-js',
+                'pkabg-admin-js',
                 plugin_dir_url( __FILE__ ) . 'assets/admin.js',
                 array(),
                 '4.2',
@@ -76,19 +68,19 @@ class ABI_Admin_Background {
 
             // Pass data to JS
             wp_localize_script(
-                'abi-admin-js',
-                'abiData',
+                'pkabg-admin-js',
+                'pkabgData',
                 array(
                     'imageUrl' => $image_url,
                     'ajaxUrl'  => admin_url( 'admin-ajax.php' ),
-                    'nonce'    => wp_create_nonce( 'abi_save' ),
+                    'nonce'    => wp_create_nonce( 'pkabg_save' ),
                 )
             );
         }
 
         // Register empty handle for inline styles
-        wp_register_style( 'abi-admin-style', false, array(), '1.0.1' );
-        wp_enqueue_style( 'abi-admin-style' );
+        wp_register_style( 'pkabg-admin-style', false, array(), '1.0.0' );
+        wp_enqueue_style( 'pkabg-admin-style' );
     }
 
     /**
@@ -105,7 +97,7 @@ class ABI_Admin_Background {
         ?>
 
         <div class="wrap">
-            <h1><?php echo esc_html__( 'Admin Background Image', 'presskopp-admin-background' ); ?></h1>
+            <h1><?php echo esc_html__( 'Presskopp Admin Background', 'presskopp-admin-background' ); ?></h1>
 
             <table class="form-table">
 
@@ -113,16 +105,16 @@ class ABI_Admin_Background {
                 <tr>
                     <th><?php echo esc_html__( 'Background Image', 'presskopp-admin-background' ); ?></th>
                     <td>
-                        <input type="hidden" id="abi_image" value="<?php echo esc_attr( $image_id ); ?>">
+                        <input type="hidden" id="pkabg_image" value="<?php echo esc_attr( $image_id ); ?>">
 
-                        <button type="button" class="button" id="abi_upload_button">
+                        <button type="button" class="button" id="pkabg_upload_button">
                             <?php echo esc_html__( 'Select Image', 'presskopp-admin-background' ); ?>
                         </button>
 
                         <button
                             type="button"
                             class="button"
-                            id="abi_remove_button"
+                            id="pkabg_remove_button"
                             style="<?php echo $image_id ? '' : 'display:none;'; ?>"
                         >
                             <?php echo esc_html__( 'Remove', 'presskopp-admin-background' ); ?>
@@ -130,27 +122,35 @@ class ABI_Admin_Background {
                     </td>
                 </tr>
 
-                <!-- Overlay + Color -->
-                <tr class="abi-dependent">
-                    <th><?php echo esc_html__( 'Overlay', 'presskopp-admin-background' ); ?></th>
-                    <td>
-                        <div class="abi-range-group">
-                            <input type="range" min="0" max="0.8" step="0.05" id="abi_overlay" value="<?php echo esc_attr( $overlay ); ?>">
-                            <output><?php echo esc_html( $overlay ); ?></output>
-                        </div>
+                <!-- Overlay -->
+				<tr class="pkabg-dependent">
+					<th>
+						<?php echo esc_html__( 'Overlay', 'presskopp-admin-background' ); ?>
+					</th>
+					<td>
+						<div class="pkabg-range-group">
+							<input type="range" min="0" max="0.8" step="0.05" id="pkabg_overlay" value="<?php echo esc_attr( $overlay ); ?>">
+							<output><?php echo esc_html( $overlay ); ?></output>
+						</div>
+					</td>
+				</tr>
 
-                        <div style="margin-top:10px;">
-                            <input type="color" id="abi_color" value="<?php echo esc_attr( $color ); ?>">
-                        </div>
-                    </td>
-                </tr>
+				<!-- Overlay Color -->
+				<tr class="pkabg-dependent">
+					<th>
+						<?php echo esc_html__( 'Overlay Color', 'presskopp-admin-background' ); ?>
+					</th>
+					<td>
+						<input type="color" id="pkabg_color" value="<?php echo esc_attr( $color ); ?>">
+					</td>
+				</tr>
 
                 <!-- Blur -->
-                <tr class="abi-dependent">
+                <tr class="pkabg-dependent">
                     <th><?php echo esc_html__( 'Blur', 'presskopp-admin-background' ); ?></th>
                     <td>
-                        <div class="abi-range-group">
-                            <input type="range" min="0" max="10" step="1" id="abi_blur" value="<?php echo esc_attr( $blur ); ?>">
+                        <div class="pkabg-range-group">
+                            <input type="range" min="0" max="10" step="1" id="pkabg_blur" value="<?php echo esc_attr( $blur ); ?>">
                             <output><?php echo esc_html( $blur ); ?></output>
                         </div>
                     </td>
@@ -167,7 +167,7 @@ class ABI_Admin_Background {
      */
     public function ajax_save_settings() {
 
-        check_ajax_referer( 'abi_save', 'nonce' );
+        check_ajax_referer( 'pkabg_save', 'nonce' );
 
         if ( ! current_user_can( 'manage_options' ) ) {
             wp_send_json_error( array( 'message' => 'Forbidden' ), 403 );
@@ -205,7 +205,7 @@ class ABI_Admin_Background {
     public function apply_background( $hook ) {
 
         // Do not apply PHP background on settings page (JS handles it)
-        if ( 'appearance_page_abi-admin-background' === $hook ) {
+        if ( 'appearance_page_pkabg-admin-background' === $hook ) {
             return;
         }
 
@@ -224,7 +224,7 @@ class ABI_Admin_Background {
         $rgba    = $this->hex_to_rgba( $color, $overlay );
 
         wp_add_inline_style(
-            'abi-admin-style',
+            'pkabg-admin-style',
             "
             body.wp-admin {
                 position: relative;
@@ -303,4 +303,4 @@ class ABI_Admin_Background {
     }
 }
 
-new ABI_Admin_Background();
+new PKABG_Admin_Background();

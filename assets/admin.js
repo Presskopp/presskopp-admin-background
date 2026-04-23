@@ -1,16 +1,16 @@
 // Admin Background Image – Main script
 document.addEventListener('DOMContentLoaded', function () {
 
-    const uploadButton = document.getElementById('abi_upload_button');
-    const removeButton = document.getElementById('abi_remove_button');
-    const imageInput   = document.getElementById('abi_image');
+    const uploadButton = document.getElementById('pkabg_upload_button');
+    const removeButton = document.getElementById('pkabg_remove_button');
+    const imageInput   = document.getElementById('pkabg_image');
 
-    const overlayInput = document.getElementById('abi_overlay');
-    const blurInput    = document.getElementById('abi_blur');
-    const colorInput   = document.getElementById('abi_color');
+    const overlayInput = document.getElementById('pkabg_overlay');
+    const blurInput    = document.getElementById('pkabg_blur');
+    const colorInput   = document.getElementById('pkabg_color');
 
     // Current selected image URL (from PHP)
-    let currentImageUrl = abiData.imageUrl || '';
+    let currentImageUrl = pkabgData.imageUrl || '';
 
     /**
      * Toggle visibility of dependent controls (overlay, blur)
@@ -18,7 +18,7 @@ document.addEventListener('DOMContentLoaded', function () {
     function updateVisibility() {
         const hasImage = !!currentImageUrl;
 
-        document.querySelectorAll('.abi-dependent').forEach(el => {
+        document.querySelectorAll('.pkabg-dependent').forEach(el => {
             el.style.display = hasImage ? '' : 'none';
         });
     }
@@ -27,13 +27,13 @@ document.addEventListener('DOMContentLoaded', function () {
      * Persist settings via AJAX
      */
     function saveSettings() {
-        fetch(abiData.ajaxUrl, {
+        fetch(pkabgData.ajaxUrl, {
             method: 'POST',
             credentials: 'same-origin',
             headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
             body: new URLSearchParams({
-                action: 'abi_save_settings',
-                nonce: abiData.nonce,
+                action: 'pkabg_save_settings',
+                nonce: pkabgData.nonce,
                 image_id: imageInput.value || 0,
                 overlay: overlayInput.value,
                 blur: blurInput.value,
@@ -68,13 +68,10 @@ document.addEventListener('DOMContentLoaded', function () {
      */
     function applyBackground(url, overlay, blur) {
 
-        let style = document.getElementById('abi-live-style');
+        let style = document.getElementById('pkabg-live-style');
 
-        // No image → remove styles completely
         if (!url) {
-            if (style) {
-                style.remove();
-            }
+            if (style) style.remove();
             return;
         }
 
@@ -83,22 +80,32 @@ document.addEventListener('DOMContentLoaded', function () {
 
         if (!style) {
             style = document.createElement('style');
-            style.id = 'abi-live-style';
+            style.id = 'pkabg-live-style';
             document.head.appendChild(style);
         }
 
         style.innerHTML = `
             body.wp-admin {
-                background: url("${url}") no-repeat center center fixed !important;
-                background-size: cover !important;
+                position: relative;
+                z-index: 0;
             }
 
             body.wp-admin::before {
-                content: "" !important;
+                content: "";
                 position: fixed;
                 inset: 0;
-                background: ${rgba} !important;
-                backdrop-filter: blur(${blur}px) !important;
+                background: url("${url}") no-repeat center center fixed;
+                background-size: cover;
+                filter: blur(${blur}px);
+                z-index: -2;
+            }
+
+            body.wp-admin::after {
+                content: "";
+                position: fixed;
+                inset: 0;
+                background: ${rgba};
+                z-index: -1;
                 pointer-events: none;
             }
         `;
@@ -119,7 +126,7 @@ document.addEventListener('DOMContentLoaded', function () {
      * Initialize range sliders with live output
      */
     function initRanges() {
-        document.querySelectorAll('.abi-range-group').forEach(group => {
+        document.querySelectorAll('.pkabg-range-group').forEach(group => {
             const input = group.querySelector('input');
             const output = group.querySelector('output');
 
@@ -182,7 +189,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 colorInput.value = '#000000';
             }
 
-            document.querySelectorAll('.abi-range-group output').forEach(o => {
+            document.querySelectorAll('.pkabg-range-group output').forEach(o => {
                 o.value = 0;
             });
 
