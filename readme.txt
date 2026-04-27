@@ -12,7 +12,7 @@ Adds a customizable background image to the WordPress admin with live preview, o
 
 == Description ==
 
-Admin Background Image allows you to customize the look and feel of your WordPress admin area by adding a background image with optional overlay color and blur effects.
+Presskopp Admin Background allows you to customize the look and feel of your WordPress admin area by adding a background image with optional overlay color and blur effects.
 
 The plugin is lightweight, fast, and applies all changes instantly.
 
